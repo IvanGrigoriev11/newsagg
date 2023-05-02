@@ -9,7 +9,6 @@ openai.api_key = os.environ["OPENAI_API_KEY"]
 
 def parse_feed(feed_url: str):
     feed = feedparser.parse(feed_url)
-
     articles = []
     for record in feed.entries:
         article = {
@@ -24,7 +23,6 @@ def parse_feed(feed_url: str):
 
 def generate_summary(article):
     prompt = f"Summarize this news article: {article['title']} {article['link']}"
-
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
