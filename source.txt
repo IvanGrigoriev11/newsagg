@@ -1,1 +1,3 @@
 https://feeds.bbci.co.uk/news/rss.xml
+https://feeds.simplecast.com/54nAGcIl
+https://www.cnbc.com/id/100003114/device/rss/rss.html
