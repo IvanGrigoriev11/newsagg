@@ -91,14 +91,12 @@ async def aggregate_feeds(feed_urls: List[str]):
     articles = []
     for feed_url in feed_urls:
         feed_articles = parse_feed(feed_url)
-        """
         generating_summaries = [generate_summary(article) for article in feed_articles]
         summaries = await asyncio.gather(*generating_summaries)
         for number, article in enumerate(feed_articles):
             article['summary'] = summaries[number]
             articles.append(article)
-        """
-    ##articles = sorted(articles, key=lambda x: x['published'], reverse=True)
+    articles = sorted(articles, key=lambda x: x['published'], reverse=True)
     return feed_articles
 
 
@@ -113,7 +111,7 @@ async def main():
         print(article['title'])
         print(article['link'])
         print(article['published'])
-        ## print(article['summary'])
+        print(article['summary'])
         print()
 
     print(stats.report())
