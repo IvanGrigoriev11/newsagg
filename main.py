@@ -46,7 +46,7 @@ async def parse_feed(feed_url: str):
         rss_last_update.setdefault(feed_url, record.id)
     """
 
-    for record in reversed(feed.entries[:4]):
+    for record in reversed(feed.entries[:2]):
         """if record.id == last_used_record_id:
             break"""
         
@@ -83,8 +83,10 @@ async def aggregate_feeds(feed_urls: List[str]):
     articles = []
     for feed_url in feed_urls:
         feed_articles = await parse_feed(feed_url)
-        for article in feed_articles:
-            article['summary'] = await generate_summary(article)
+        generating_summaries = [generate_summary(article) for article in feed_articles]
+        summaries = await asyncio.gather(*generating_summaries)
+        for number, article in enumerate(feed_articles):
+            article['summary'] = summaries[number]
             articles.append(article)
 
     articles = sorted(articles, key=lambda x: x['published'], reverse=True)
