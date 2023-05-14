@@ -7,6 +7,8 @@ import os
 from time import time
 from collections import defaultdict
 import inspect
+from dateutil import parser
+import json
 
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
@@ -43,7 +45,7 @@ stats = Stats()
 
 
 @stats.track
-def parse_feed(feed_url: str):
+async def parse_feed(feed_url: str):
     feed = feedparser.parse(feed_url)
     articles = []
 
@@ -87,17 +89,27 @@ async def generate_summary(article):
 
 
 @stats.track
-async def aggregate_feeds(feed_urls: List[str]):
+async def aggregate_feeds(feed_url: str):
     articles = []
-    for feed_url in feed_urls:
-        feed_articles = parse_feed(feed_url)
-        generating_summaries = [generate_summary(article) for article in feed_articles]
-        summaries = await asyncio.gather(*generating_summaries)
-        for number, article in enumerate(feed_articles):
-            article['summary'] = summaries[number]
-            articles.append(article)
-    articles = sorted(articles, key=lambda x: x['published'], reverse=True)
+    feed_articles = await parse_feed(feed_url)
+    generating_summaries = [generate_summary(article) for article in feed_articles]
+    summaries = await asyncio.gather(*generating_summaries)
+    for number, article in enumerate(feed_articles):
+        article['summary'] = summaries[number]
+        articles.append(article)
     return feed_articles
+    
+
+@stats.track
+def handle(articles_per_feed: List[List[Dict]]) -> List[Dict]:
+    all_articles = []
+    for sublist in articles_per_feed:
+        for dictionary in sublist:
+            all_articles.append(dictionary)
+    for article in all_articles:
+        article['published'] = parser.parse(article['published'])
+    x = sorted(all_articles, key=lambda x: x['published'], reverse=True)
+    return x
 
 
 async def main():
@@ -106,13 +118,11 @@ async def main():
         for line in f.readlines():
             feed_urls.append(line.strip())
 
-    articles = await aggregate_feeds(feed_urls)
-    for article in articles:
-        print(article['title'])
-        print(article['link'])
-        print(article['published'])
-        print(article['summary'])
-        print()
+    feeds = [aggregate_feeds(feed) for feed in feed_urls]
+    articles =  await asyncio.gather(*feeds)
+    
+    with open("articles.json", 'w') as file:
+        json.dump(articles, file)
 
     print(stats.report())
 
